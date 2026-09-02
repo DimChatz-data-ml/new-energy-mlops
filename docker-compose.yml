@@ -43,6 +43,7 @@ services:
       - .env
     volumes:
       - .:/app      
+      - /app/.venv   # <-- ΑΥΤΟ ΑΠΟΜΟΝΩΝΕΙ ΤΟ VENV ΤΟΥ DOCKER ΑΠΟ ΤΑ WINDOWS
 
 volumes:
   pgdata:
