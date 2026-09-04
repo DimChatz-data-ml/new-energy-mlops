@@ -1,19 +1,7 @@
-import os
-import psycopg2
+from ingestion.create_table import create_prices_table
 
 def main():
-    conn = psycopg2.connect(
-        host="postgres",
-        port=5432,
-        user=os.environ["POSTGRES_USER"],
-        password=os.environ["POSTGRES_PASSWORD"],
-        dbname=os.environ["POSTGRES_DB"],
-    )
-    cur = conn.cursor()
-    cur.execute("SELECT version();")
-    print("Connected! Postgres version:", cur.fetchone())
-    cur.close()
-    conn.close()
+    create_prices_table()
 
 if __name__ == "__main__":
     main()
