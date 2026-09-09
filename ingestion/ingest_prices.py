@@ -15,15 +15,24 @@ def load_prices(df):
     connection=create_connection()
     cursor=connection.cursor()
     for index, row in df.iterrows():
-        cursor.execute(
-    """INSERT INTO prices (timestamp, prices, country) 
-       VALUES (%s, %s, %s) 
-       ON CONFLICT (timestamp, country) 
-       DO UPDATE SET prices = EXCLUDED.prices""",
-    (row['timestamp'], row['prices'], row['country'])
-)  
+        try:
+            cursor.execute(
+        """INSERT INTO prices (timestamp, prices, country) 
+        VALUES (%s, %s, %s) 
+        ON CONFLICT (timestamp, country) 
+        DO UPDATE SET prices = EXCLUDED.prices""",
+        (row['timestamp'], row['prices'], row['country']))
+            connection.commit()
 
-    connection.commit()
+               
+        except Exception as e:
+            connection.rollback()
+            print(f'problem {e} in index {index}')
+
+
+                
+            
+
     cursor.close()
     connection.close()
 
