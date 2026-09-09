@@ -31,7 +31,9 @@ services:
       - "${PGADMIN_PORT:-5050}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+
   app:
+    profiles: ["manual"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -42,8 +44,8 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app      
-      - /app/.venv   # <-- ΑΥΤΟ ΑΠΟΜΟΝΩΝΕΙ ΤΟ VENV ΤΟΥ DOCKER ΑΠΟ ΤΑ WINDOWS
+      - .:/app
+      - /app/.venv
 
 volumes:
   pgdata:
