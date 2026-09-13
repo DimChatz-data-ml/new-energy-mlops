@@ -1,6 +1,9 @@
+import logging
 from ingestion.api_connection import api_con_func
 from ingestion.db_connection import create_connection
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def extract_wind_solar(country, start, end):
@@ -33,18 +36,25 @@ def load_wind_solar(df):
             counter += 1
             if counter == 500:
                 connection.commit()
+                logger.info(f"wind_solar: committed 500 rows (up to index {index})")
                 counter = 0
 
         except Exception as e:
             connection.rollback()
-            print(f'problem {e} in index {index}')
+            logger.error(f'wind_solar: problem {e} in index {index}')
 
     connection.commit()
+    logger.info(f"wind_solar: final commit done, {len(df)} rows processed total")
     cursor.close()
     connection.close()
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+    )
+
     start = pd.Timestamp.now(tz="Europe/Athens")
     end = start + pd.Timedelta(days=2)
 
@@ -52,4 +62,4 @@ if __name__ == "__main__":
     load_wind_solar(df)      # 1st time
     load_wind_solar(df)      # 2nd time
 
-    print("It ran 2 times.Check pgadmin: SELECT COUNT(*) FROM wind_solar;")
+    logger.info("It ran 2 times. Check pgadmin: SELECT COUNT(*) FROM wind_solar;")
