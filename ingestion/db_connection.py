@@ -3,8 +3,8 @@ import psycopg2
 
 def create_connection():
     conn = psycopg2.connect(
-        host="postgres",
-        port=5432,
+        host=os.environ.get("POSTGRES_HOST", "localhost"),
+        port=os.environ.get("POSTGRES_PORT", "5432"),
         user=os.environ["POSTGRES_USER"],
         password=os.environ["POSTGRES_PASSWORD"],
         dbname=os.environ["POSTGRES_DB"],

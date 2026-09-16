@@ -23,7 +23,7 @@ CREATE_GENERATION_TABLE= """
 
 CREATE TABLE IF NOT EXISTS GENERATION(
     "timestamp" TIMESTAMPTZ,
-    production_type varchar(50),
+    production_type varchar(100),
     country varchar(10),
     quantity_mw numeric,
     PRIMARY KEY ("timestamp",country,production_type)

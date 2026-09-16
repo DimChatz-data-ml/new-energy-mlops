@@ -1,4 +1,5 @@
 import logging
+from psycopg2.extras import execute_values
 from ingestion.api_connection import api_con_func
 from ingestion.db_connection import create_connection
 import pandas as pd
@@ -19,29 +20,33 @@ def extract_load_mw(country, start, end):
 def load_load_mw(df):
     connection = create_connection()
     cursor = connection.cursor()
-    counter = 0
-    for index, row in df.iterrows():
-        try:
-            cursor.execute(
-        """INSERT INTO load (timestamp, actual_load, country) 
-        VALUES (%s, %s, %s) 
-        ON CONFLICT (timestamp, country) 
-        DO UPDATE SET actual_load = EXCLUDED.actual_load""",
-        (row['timestamp'], row['actual_load'], row['country']))
-            counter += 1
-            if counter == 500:
-                connection.commit()
-                logger.info(f"load: committed 500 rows (up to index {index})")
-                counter = 0
 
-        except Exception as e:
-            connection.rollback()
-            logger.error(f'load: problem {e} in index {index}')
+    data = list(
+        df[['timestamp', 'actual_load', 'country']].itertuples(index=False, name=None)
+    )
 
-    connection.commit()
-    logger.info(f"load: final commit done, {len(df)} rows processed total")
-    cursor.close()
-    connection.close()
+    query = """
+        INSERT INTO load (timestamp, actual_load, country)
+        VALUES %s
+        ON CONFLICT (timestamp, country)
+        DO UPDATE SET actual_load = EXCLUDED.actual_load
+    """
+
+    try:
+        execute_values(cursor, query, data, page_size=5000)
+        connection.commit()
+        logger.info(
+            f"load: bulk insert done, {len(data)} rows processed total"
+        )
+
+    except Exception:
+        connection.rollback()
+        logger.exception("load: bulk insert failed")
+        raise
+
+    finally:
+        cursor.close()
+        connection.close()
 
 
 if __name__ == "__main__":
@@ -54,7 +59,7 @@ if __name__ == "__main__":
     start = end - pd.Timedelta(days=2)
 
     df = extract_load_mw("GR", start, end)
-    load_load_mw(df)      # 1st time
-    load_load_mw(df)      # 2nd time
+    load_load_mw(df)
+    load_load_mw(df)
 
     logger.info("It ran 2 times. Check pgadmin: SELECT COUNT(*) FROM load;")
