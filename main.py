@@ -24,6 +24,7 @@ def generate_date_chunks(start, end):
 
 def main():
     create_all_tables()
+    failures=[]
     start = pd.Timestamp("2020-01-01", tz="Europe/Athens")
     end = pd.Timestamp.now(tz="Europe/Athens")
     chunks = generate_date_chunks(start, end)
@@ -37,6 +38,13 @@ def main():
                 load_prices(df)
             except Exception as e:
                 logger.error(f'problem with prices, {country}, chunk {chunk}: {e}')
+                failures.append({
+                    "data_type": "prices",
+                    "country": country,
+                    "chunk_start": chunk[0],
+                    "chunk_end": chunk[1],
+                    "error": str(e)
+                })
 
             logger.info(f"load | {country} | {chunk[0].date()} -> {chunk[1].date()}")
             try:
@@ -45,6 +53,13 @@ def main():
                 load_load_mw(df)
             except Exception as e:
                 logger.error(f'problem with load, {country}, chunk {chunk}: {e}')
+                failures.append({
+                    "data_type": "load",
+                    "country": country,
+                    "chunk_start": chunk[0],
+                    "chunk_end": chunk[1],
+                    "error": str(e)
+                })
 
             logger.info(f"generation | {country} | {chunk[0].date()} -> {chunk[1].date()}")
             try:
@@ -53,6 +68,13 @@ def main():
                 load_generation(df)
             except Exception as e:
                 logger.error(f'problem with generation, {country}, chunk {chunk}: {e}')
+                failures.append({
+                    "data_type": "generation",
+                    "country": country,
+                    "chunk_start": chunk[0],
+                    "chunk_end": chunk[1],
+                    "error": str(e)
+                })
 
     # Wind/Solar forecast: μόνο μελλοντικό, εκτός date-chunk loop
     forecast_start = pd.Timestamp.now(tz="Europe/Athens")
@@ -65,6 +87,18 @@ def main():
             load_wind_solar(df)
         except Exception as e:
             logger.error(f'problem with wind_solar, {country}: {e}')
+            failures.append({
+                    "data_type": "wind_solar",
+                    "country": country,
+                    "chunk_start": forecast_start,
+                    "chunk_end": forecast_end,
+                    "error": str(e)
+                })
+
+    if failures:
+        logger.warning(f'we have {len(failures)} failures')
+        for failure in failures:
+            logger.warning(f'{failure["data_type"]}|{failure["country"]}|{failure["chunk_start"]}|{failure["chunk_end"]}|{failure["error"]}|')
 
 
 if __name__ == "__main__":
