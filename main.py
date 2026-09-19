@@ -25,8 +25,8 @@ def generate_date_chunks(start, end):
 def main():
     create_all_tables()
     failures=[]
-    start = pd.Timestamp("2020-01-01", tz="Europe/Athens")
-    end = pd.Timestamp.now(tz="Europe/Athens")
+    start = pd.Timestamp("2020-01-01", tz="UTC")
+    end = pd.Timestamp.now(tz="UTC")
     chunks = generate_date_chunks(start, end)
 
     for country in countries:
@@ -77,7 +77,7 @@ def main():
                 })
 
     # Wind/Solar forecast: μόνο μελλοντικό, εκτός date-chunk loop
-    forecast_start = pd.Timestamp.now(tz="Europe/Athens")
+    forecast_start = pd.Timestamp.now(tz="UTC")
     forecast_end = forecast_start + pd.Timedelta(days=2)
     for country in countries:
         logger.info(f"wind_solar | {country} | forecast {forecast_start.date()} -> {forecast_end.date()}")
@@ -99,7 +99,7 @@ def main():
         logger.warning(f'we have {len(failures)} failures')
         for failure in failures:
             logger.warning(f'{failure["data_type"]}|{failure["country"]}|{failure["chunk_start"]}|{failure["chunk_end"]}|{failure["error"]}|')
-
+    logger.info("backfill complete")
 
 if __name__ == "__main__":
     logging.basicConfig(

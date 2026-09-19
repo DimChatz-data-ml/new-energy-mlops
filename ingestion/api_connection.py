@@ -11,5 +11,5 @@ def api_con_func():
     if not api_key:
         raise ValueError('api key was not found! ')
 
-    client=EntsoePandasClient(api_key=api_key)
+    client=EntsoePandasClient(api_key=api_key, timeout=60)
     return client
