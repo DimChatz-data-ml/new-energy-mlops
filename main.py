@@ -1,4 +1,7 @@
 import logging
+import time
+import json
+from pathlib import Path
 from ingestion.create_table import create_all_tables
 from ingestion.ingest_prices import extract_prices, load_prices
 from ingestion.ingest_load import extract_load_mw, load_load_mw
@@ -99,7 +102,18 @@ def main():
         logger.warning(f'we have {len(failures)} failures')
         for failure in failures:
             logger.warning(f'{failure["data_type"]}|{failure["country"]}|{failure["chunk_start"]}|{failure["chunk_end"]}|{failure["error"]}|')
-    logger.info("backfill complete")
+        
+        logs_dir = Path("logs")
+        logs_dir.mkdir(exist_ok=True)
+        failures_file = logs_dir / "failures.json"
+        
+        with open(failures_file, "w", encoding="utf-8") as f:
+            # Το default=str μετατρέπει τα Timestamps σε strings αυτόματα!
+            json.dump(failures, f, indent=2, ensure_ascii=False, default=str)
+            
+        logger.info(f"Saved {len(failures)} failures to {failures_file}")
+    else:
+        logger.info("Backfill complete with 0 failures!")
 
 if __name__ == "__main__":
     logging.basicConfig(
