@@ -7,3 +7,4 @@ notebooks/
 logs/
 *.sql
 backup_bronze.sql
+test_interview.py
