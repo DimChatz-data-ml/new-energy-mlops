@@ -51,6 +51,18 @@ def build_load(connection):
         .sort(['country', 'timestamp'])
         )
 
+def build_generation(connection):
+    query = "select timestamp, production_type, country, quantity_mw from generation"
+    df = pl.read_database(query=query, connection=connection)
+    out=(
+        df.filter(
+            ~pl.col("production_type").str.ends_with("Consumption"))
+            .with_columns(pl.col('production_type').str.strip_suffix(" - Actual Aggregated"))
+        )
+    return out
+
+
+
 if __name__ == "__main__":
     load_dotenv()
     connection = create_connection()
