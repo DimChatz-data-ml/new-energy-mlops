@@ -64,12 +64,19 @@ def build_generation(connection):
                 .sort(['country','production_type','timestamp'])
                 .upsample(time_column='timestamp',every='1h',group_by=['country','production_type'])
                 .sort(['country','production_type','timestamp'])
+                # wide: one row per country and hour, one column per production_type.
+                # Only avg_gen is pivoted, so n_gen is not in the wide table.
+                # n_gen not pivoted: n_gen=1 in FR/GR is mostly hourly-resolution era, not low quality
+                .select(['country', 'timestamp', 'production_type', 'avg_gen'])
+                .pivot(index=['country', 'timestamp'], on='production_type', values='avg_gen')
+                .sort(['country', 'timestamp'])
         )
 
 
 
 if __name__ == "__main__":
     load_dotenv()
+    pl.Config.set_tbl_cols(-1)
     connection = create_connection()
 
     prices_df = build_prices(connection)
@@ -88,3 +95,12 @@ if __name__ == "__main__":
     print(load_df.group_by("n_load").len())
     print(load_df.null_count())
     print(load_df.group_by("country").len().sort("country"))
+
+    generation_df = build_generation(connection)
+    print(generation_df.shape)
+    print(generation_df.head(5))
+    print(generation_df.tail(5))
+    print(generation_df.schema)
+    print(generation_df.null_count())
+
+    print(generation_df.group_by("country").len().sort("country"))
