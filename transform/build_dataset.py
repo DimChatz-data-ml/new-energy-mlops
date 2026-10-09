@@ -52,16 +52,18 @@ def build_load(connection):
         )
 
 def build_generation(connection):
-    query = "select timestamp, production_type, country, quantity_mw from generation"
+    query = "select timestamp, production_type, country, quantity_mw from generation "
     df = pl.read_database(query=query, connection=connection)
     return(
         df.filter(
             ~pl.col("production_type").str.ends_with("Consumption"))
-            .with_columns(pl.col('production_type').str.strip_suffix(" - Actual Aggregated"))
-            .sort(['country','production_type','timestamp'])
-            .group_by_dynamic(index_column='timestamp',every='1h',group_by=['country','production_type'])
-            .agg(pl.col('quantity_mw').mean().alias('avg_gen'),pl.len().alias('n_gen'))
-            .sort(['country','production_type','timestamp'])
+                .with_columns(pl.col('production_type').str.strip_suffix(" - Actual Aggregated"))
+                .sort(['country','production_type','timestamp'])
+                .group_by_dynamic(index_column='timestamp',every='1h',group_by=['country','production_type'])
+                .agg(pl.col('quantity_mw').mean().alias('avg_gen'),pl.len().alias('n_gen'))
+                .sort(['country','production_type','timestamp'])
+                .upsample(time_column='timestamp',every='1h',group_by=['country','production_type'])
+                .sort(['country','production_type','timestamp'])
         )
 
 
